@@ -3,20 +3,27 @@ precision highp float;
 #define TAU 6.28318530718
 
 uniform float time;
+uniform int frame;
 uniform highp ivec2 resolution;
 
 uniform sampler2D bufferA;
+
+uniform float none;
+
 
 uniform mat3x3 axes;
 uniform mat2x4 projMat;
 
 
 
-int sqI(ivec2 v) { return v.x*v.x + v.y*v.y; }
-int sqI(int v) { return v*v; }
+int sqi(ivec2 v) { return v.x*v.x + v.y*v.y; }
+int sqi(int v) { return v*v; }
 #define sqFunc(type) float sq(type v) { return dot(v, v); }
 sqFunc(vec2)
 sqFunc(float)
+
+float maxVal(vec2 v) { return max(v.x, v.y); }
+
 
 
 // Complex functions
@@ -53,53 +60,6 @@ bool inRange(vec2 ts)
 {
     return cSqAbs(ts) <= 1.;
 }
-
-// autodiff
-
-// x + y * i
-// vec4(x, x', y, y')
-
-
-// vec4 d_cMul(vec4 a, vec4 b) { return vec4(cMul(a.xz, b.xz), cMul(a.yw, b.xz) + cMul(a.xz, b.yw)).xzyw; }
-// vec4 d_cSq(vec4 z) { return vec4(cSq(z.xz), 2.*cMul(z.xz, z.yw)).xzyw; }
-// vec4 d_cCon(vec4 z) { return vec4(z.xy, -z.zw); }
-// vec2 d_cSqAbs(vec4 z) { return vec2(sq(z.x) + sq(z.z), 2.*dot(z.xz, z.yw)); }
-
-// vec2 d_recip(vec2 b) { return vec2(1. / b.x, -b.y / sq(b.x)); }
-
-// vec2 d_mul(vec2 a, vec2 b) { return vec2(a.x*b.x, a.y*b.x + b.y*a.x); }
-// vec4 d_rMul(vec4 a, vec2 b) { return vec4(d_mul(a.xy, b), d_mul(a.zw, b)); }
-
-// vec4 d_cRecip(vec4 b) { return d_rMul(d_cCon(b), d_recip(d_cSqAbs(b))); }  // 1/b = cCon(b) / ( b*cCon(b) ) = cCon(b) / cSqAbs(b)
-
-// vec2 d_sq(vec2 a) { return vec2(sq(a.x), 2.*a.x*a.y); }
-
-// mat3x2 surfaceAutoDiff(vec4 s)
-// {
-//     const float sqrt5 = sqrt(5.);
-    
-//     vec4 s2 = d_cSq(s);
-//     vec4 s3 = d_cMul(s2, s);
-//     vec4 s4 = d_cSq(s2);
-//     vec4 s6 = d_cSq(s3);
-    
-//     const vec4 one = vec4(1, 0, 0, 0);
-    
-//     vec4 denominator = d_cRecip(s6 + sqrt5*s3 - one);
-    
-//     mat3x2 g = mat3x2(
-//         -1.5 * d_cMul(d_cMul(s, one - s4), denominator).zw, 
-//         -1.5 * d_cMul(d_cMul(s, one + s4), denominator).xy, 
-//         d_cMul(one + s6, denominator).zw - vec2(0.5, 0)
-//     );
-
-//     vec2 normalFactor = d_recip(d_sq(g[0]) + d_sq(g[1]) + d_sq(g[2]));
-
-//     return mat3x2(d_mul(g[0], normalFactor), d_mul(g[1], normalFactor), d_mul(g[2], normalFactor));
-// }
-
-
-
 
 
 // x + y * i
@@ -150,23 +110,9 @@ mat3x3 surfaceAutoDiff(mat3x2 s)
 
 
 
+// const float dt = 0.01;
 
 
-
-
-// const float r1 = 1.;
-// const float r2 = 0.5;
-// vec3 surface(vec2 ts)
-// {
-//     //ts *= TAU;
-
-//     return vec3((r2 * cos(ts.y) + r1) * vec2(cos(ts.x), sin(ts.x)), r2 * sin(ts.y));
-//     //return vec3(cos(ts.y) * vec2(cos(ts.x), sin(ts.x)), sin(ts.y));
-//     //return vec3(1, 1, 0) * ts.x + vec3(0, 1, 1) * ts.y;
-// }
-
-
-const float dt = 0.01;
 mat2x3 surfaceJacob(vec2 ts, vec3 pos)
 {
     // return mat2x3((surface(ts + vec2(dt, 0)) - pos) / dt,    // d(surface(t, s))/dt
@@ -175,7 +121,7 @@ mat2x3 surfaceJacob(vec2 ts, vec3 pos)
     // return mat2x3(transpose(surfaceAutoDiff(vec4(ts.x, 1, ts.y, 0)))[1],
     //               transpose(surfaceAutoDiff(vec4(ts.x, 0, ts.y, 1)))[1]);
 
-    mat3x3 autodiffRes_t = transpose(surfaceAutoDiff(mat3x2(ts.x, ts.y, 1, 0, 0, 1)));
+    mat3x3 autodiffRes_t = transpose(surfaceAutoDiff(mat3x2(ts, 1, 0, 0, 1)));
 
     return mat2x3(autodiffRes_t[1], autodiffRes_t[2]);
 
@@ -188,8 +134,4 @@ vec2 proj(vec3 v)  // TODO: define?
     // return v * mat2x3(projMat) + projMat[3]
 }
 
-#define NONE 0
-#define ACTIVE 1
-
-#define MODE(p) int(p.w)
-#define WITHMODE(p, m) vec4(p.xyz, m)
+#define ISNONE(x) (abs(x - none) < 0.01)

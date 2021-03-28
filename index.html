@@ -75,25 +75,25 @@
 
                 const bufferAProgramInfo = twgl.createProgramInfo(gl, ["vs", concat(values[0], values[2])]);
 
-                let AInFbi = twgl.createFramebufferInfo(gl, attachments);
-                let AOutFbi = twgl.createFramebufferInfo(gl, attachments);
+                let bufferAInFbi = twgl.createFramebufferInfo(gl, attachments);
+                let bufferAOutFbi = twgl.createFramebufferInfo(gl, attachments);
 
 
-                const position3DProgramInfo = twgl.createProgramInfo(gl, ["vs", concat(values[0], values[3])]);
+                // const blueProgramInfo = twgl.createProgramInfo(gl, ["vs", concat(values[0], "#define FLIP_FORWARD", values[2])]);
 
-                let position3DInFbi = twgl.createFramebufferInfo(gl, attachments);
-                let position3DOutFbi = twgl.createFramebufferInfo(gl, attachments);
+                // let blueInFbi = twgl.createFramebufferInfo(gl, attachments);
+                // let blueOutFbi = twgl.createFramebufferInfo(gl, attachments);
 
 
                 if (twgl.resizeCanvasToDisplaySize(gl.canvas))
                 {
                     // resize the attachments
 
-                    twgl.resizeFramebufferInfo(gl, AInFbi, attachments);
-                    twgl.resizeFramebufferInfo(gl, AOutFbi, attachments);
+                    twgl.resizeFramebufferInfo(gl, bufferAInFbi, attachments);
+                    twgl.resizeFramebufferInfo(gl, bufferAOutFbi, attachments);
 
-                    twgl.resizeFramebufferInfo(gl, position3DInFbi, attachments);
-                    twgl.resizeFramebufferInfo(gl, position3DOutFbi, attachments);
+                    // twgl.resizeFramebufferInfo(gl, blueInFbi, attachments);
+                    // twgl.resizeFramebufferInfo(gl, blueOutFbi, attachments);
                 }
 
                 function draw(programInfo, frameBufferInfo, uniforms)
@@ -137,28 +137,19 @@
                         time: time,
                         resolution: [gl.canvas.width, gl.canvas.height],
                         frame: frame,
-                        bufferA: AInFbi.attachments[0],
+                        bufferA: bufferAInFbi.attachments[0],
+                        // blueBuffer: blueInFbi.attachments[0],
+                        none: 100000
                     }, getAxesUniforms(rotation, radius, center));
-
-                    
-                    draw(position3DProgramInfo, position3DOutFbi, Object.assign({
-                        position3D: position3DInFbi.attachments[0]
-                    }, uniforms));
-
-
-                    Object.assign(uniforms, {
-                        position3D: position3DOutFbi.attachments[0]
-                    });
 
                     draw(imageProgramInfo, null, uniforms);
 
-                    draw(bufferAProgramInfo, AOutFbi, uniforms);
+                    draw(bufferAProgramInfo, bufferAOutFbi, uniforms);
+                    // draw(blueProgramInfo, blueOutFbi, uniforms);
 
 
-                    [AInFbi, AOutFbi] = [AOutFbi, AInFbi];
-
-                    [position3DInFbi, position3DOutFbi] = [position3DOutFbi, position3DInFbi];
-
+                    [bufferAInFbi, bufferAOutFbi] = [bufferAOutFbi, bufferAInFbi];
+                    // [blueInFbi, blueOutFbi] = [blueOutFbi, blueInFbi];
 
 
 
