@@ -9,11 +9,11 @@ void main( void )
 
     vec4 val = texelFetch(bufferA, coord, 0);
 
-    if(!ISNONE(val.z))
-    {
-        fragColor = vec4(1, 0, 0, 1);
-        return;
-    }
+    // if(!ISNONE(val.z))
+    // {
+    //     fragColor = vec4(1, 0, 0, 1);
+    //     return;
+    // }
 
     if(ISNONE(val.x))//(MODE(val) == NONE)
     {

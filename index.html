@@ -109,7 +109,6 @@
                 
 
                 const center = [0, 0, -0.75];  // [0, 0, 0];
-                let radius = 1.75;  // 2;
 
                 let frame = 0;
                 let lastTime = 0;
@@ -143,9 +142,17 @@
 
                     draw(imageProgramInfo, null, uniforms);
 
-                    draw(bufferAProgramInfo, bufferAOutFbi, uniforms);
+                    for(let i = 1; i <= 3; i++)
+                    {
+                        draw(bufferAProgramInfo, bufferAOutFbi, Object.assign({}, uniforms, {
+                            bufferA: bufferAInFbi.attachments[0],
+                            START_N: i,
+                            MAX_N: i,
+                            BLUE_JUMP: Math.pow(3, 3)
+                        }));
 
-                    [bufferAInFbi, bufferAOutFbi] = [bufferAOutFbi, bufferAInFbi];
+                        [bufferAInFbi, bufferAOutFbi] = [bufferAOutFbi, bufferAInFbi];
+                    }
                     
 
 
@@ -160,7 +167,9 @@
 
             /// Axes ///
 
-            rotation = [0, 0];
+            // Rotation 
+
+            let rotation = [0, 0];
             function getRotation(p)
             {
                 return [p[0] / gl.canvas.width, p[1] / gl.canvas.height].map(d => d*2*Math.PI);
@@ -183,6 +192,18 @@
             {
                 rotation = getRotation([e.offsetX - gl.canvas.width/2, e.offsetY - gl.canvas.height/2]);
             });
+
+
+            // zoom
+
+            let radius = 1.75;  // 2;
+
+            gl.canvas.addEventListener("wheel", e => 
+            {
+
+                radius *= Math.exp(e.deltaY / 1000);
+            });
+
 
 
             function cross(a, b)
