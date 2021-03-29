@@ -42,6 +42,8 @@ vec2 multI(vec2 z)
     return vec2(-z.y, z.x);
 }
 
+int lerp(int x, int y, int a) { return (1-a)*x + a*y; }
+
 int jumpFunc(int n) { return n*n*n; }
 // n
 // n*n, sqi(n)
@@ -54,7 +56,7 @@ int jumpFunc(int n) { return n*n*n; }
 
 
 const int MAX_N = 4;
-#define BLUE_JUMP jumpFunc(4)  // MAX_N
+#define BLUE_JUMP jumpFunc(MAX_N)  // MAX_N
 
 void main( void )
 {    
@@ -84,7 +86,9 @@ void main( void )
 
 
     for(int n = 0; n <= MAX_N; n++)
-        for(int i = 1; i < 8; i += 2 /* variable (1, 2) */)
+    {
+        int sn = sign(n);
+        for(int i = lerp(0, 1, sn); i < lerp(1, 8, sn); i += 2 /* variable (1, 2) */)
         {
             ivec2 otherCoord = coord + jumpFunc(n) * relSquare(i);
 
@@ -111,7 +115,7 @@ void main( void )
 
                     // Newton's method iterations.
                     // Do more iterations when 'other' is blue.
-                    for(int i = 0; i < (otherYellowBlue == 1 ? 5 : 2); i++) 
+                    for(int i = 0; i < (otherYellowBlue == 1 ? 5 : 2) && maxVal(abs(fcoord - surfProj)) > 0.5; i++) 
                     {
                         sj = transpose(surfaceAutoDiff(mat3x2(ts, 1, 0, 0, 1)));
 
@@ -127,7 +131,7 @@ void main( void )
                     surfProj = proj(surf);
 
 
-                    bool newSettled = maxVal(abs(fcoord - surfProj)) <= 1.;//sq(1.);
+                    bool newSettled = maxVal(abs(fcoord - surfProj)) <= 0.5;
 
                     if(newSettled)
                     {
@@ -143,7 +147,7 @@ void main( void )
                                 if(yellowBlue == 0) fragColor.xy = ts;
                                 else fragColor.zw = ts;
 
-                                lastSettled[yellowBlue] = newSettled;
+                                lastSettled[yellowBlue] = true;
                                 minForward[yellowBlue] = forwardDir;
                             }
                         }
@@ -151,7 +155,7 @@ void main( void )
                 }
             }
         }
-
+    }
 }
 
 

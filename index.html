@@ -114,14 +114,14 @@
                 let frame = 0;
                 let lastTime = 0;
                 let fpsEMA = 0;  // exponential moving average
-                const alpha = 0.5;
+                const alpha = 0.2;
                 function render(time)
                 {
                     time *= 0.001;
 
                     fpsEMA = alpha / (time - lastTime) + (1 - alpha) * fpsEMA;
 
-                    if(frame % 2 == 0) updateFPS(fpsEMA);
+                    if(frame % 5 == 0) updateFPS(fpsEMA);
 
                     if (twgl.resizeCanvasToDisplaySize(gl.canvas))
                     {
@@ -138,19 +138,15 @@
                         resolution: [gl.canvas.width, gl.canvas.height],
                         frame: frame,
                         bufferA: bufferAInFbi.attachments[0],
-                        // blueBuffer: blueInFbi.attachments[0],
                         none: 100000
                     }, getAxesUniforms(rotation, radius, center));
 
                     draw(imageProgramInfo, null, uniforms);
 
                     draw(bufferAProgramInfo, bufferAOutFbi, uniforms);
-                    // draw(blueProgramInfo, blueOutFbi, uniforms);
-
 
                     [bufferAInFbi, bufferAOutFbi] = [bufferAOutFbi, bufferAInFbi];
-                    // [blueInFbi, blueOutFbi] = [blueOutFbi, blueInFbi];
-
+                    
 
 
                     frame++;
