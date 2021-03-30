@@ -156,7 +156,7 @@ void main( void )
     {
         const vec2 initTS = vec2(0.5, 0.5);
 
-        if(coord == ivec2(proj(surface(initTS))))
+        if(sqi(coord - ivec2(proj(surface(initTS)))) < 4)
             fragColor = vec4(initTS, none, none);
         else
             fragColor = vec4(none);
@@ -181,24 +181,25 @@ void main( void )
     //     return;
     // }
 
+    // int N = 1 + (int(343. * hash12(vec2(2 * frame + START_N, coord.x + resolution.x * coord.y) / 421.)) % 3);
     for(int n = START_N; n <= MAX_N; n++)
     {
         int jf = jumpFunc(n);
 
-        if(jf == 1)
-        {
-            for(int i = 1; i < 8; i += 2 /* variable (1, 2) */)
-            {
-                ivec2 otherCoord = coord + jf * relSquare(i);
+        // if(false && jf == 1)
+        // {
+        //     for(int i = 1; i < 8; i += 2 /* variable (1, 2) */)
+        //     {
+        //         ivec2 otherCoord = coord + jf * relSquare(i);
 
 
-                if(any(lessThan(otherCoord, ivec2(0))) || any(greaterThanEqual(otherCoord, resolution))) continue;
+        //         if(any(lessThan(otherCoord, ivec2(0))) || any(greaterThanEqual(otherCoord, resolution))) continue;
 
 
-                handleNeighbour(otherCoord, fcoord, onBlue, lastSettled, minForward);
-            }
-        }
-        else
+        //         handleNeighbour(otherCoord, fcoord, onBlue, lastSettled, minForward);
+        //     }
+        // }
+        // else
         {
             int i = 1 + 2 * (int(100. * hash12(vec2(2 * frame + START_N, coord.x + resolution.x * coord.y) / 100.)) % 4);
             // int i = 1 + 2 * (((3 * frame + START_N) + coord.x + resolution.x * coord.y) % 4);
