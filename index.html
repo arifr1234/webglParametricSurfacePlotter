@@ -28,7 +28,7 @@
 
             #editor { 
                 width: 100%;
-                height: 100vh;
+                height: 80vh;
             }
         
         </style>
@@ -38,11 +38,17 @@
         <div style="width: 100vw; height: 100vh; overflow: hidden;">
             <div id="leftBar" style="background-color: black; width: 400px; height: 100vh; float: left; display: flex;">
                 
-                <div id="editor">
-                    vec2 func(int a, foo b)
-                    {
-                        return a(abs(a), dot(vec2(1, 1), vec2(5, 2)));
-                    }
+                <div style="width: 100%; height: 100vh;">
+                    <div id="editor">
+                        vec2 func(int a, foo b)
+                        {
+                            return a(abs(a), dot(vec2(1, 1), vec2(5, 2)));
+                        }
+                    </div>
+
+                    <div>
+                        <button id="plotButton" style="width: 50px; height: 50px;">Plot!</button>
+                    </div>
                 </div>
                 
                 <a id="dragBar" style="cursor:col-resize; width: 5px; height: 100vh; background-color: gray; display: block;"></a>
@@ -93,6 +99,206 @@
 			}
 		</script>
         <script src="graphics.js"></script>
+
+<script type="x-shader/fragment" id="boySurface">
+VAL3 surface(VAL2 s)
+{
+    const float sqrt5 = sqrt(5.);
+    
+    VAL2 s2 = dc_sq(s);
+    VAL2 s3 = dc_mul(s2, s);
+    VAL2 s4 = dc_sq(s2);
+    VAL2 s6 = dc_sq(s3);
+    
+    const VAL2 one = VAL2(c(1), c(0));
+    
+    VAL2 denominator = dc_recip(s6 + sqrt5*s3 - one);
+    
+    VAL3 g = VAL3(
+        -1.5 * dc_mul(dc_mul(s, one - s4), denominator)[1],
+        -1.5 * dc_mul(dc_mul(s, one + s4), denominator)[0],
+        dc_mul(one + s6, denominator)[1] - c(0.5)
+    );
+
+    VAL normalFactor = recip(d_sq(g[0]) + d_sq(g[1]) + d_sq(g[2]));
+
+    return VAL3(mul(g[0], normalFactor), mul(g[1], normalFactor), mul(g[2], normalFactor) + c(0.75));
+}
+
+bool inRange(vec2 ts)
+{
+    return sq(ts.x) + sq(ts.y) <= 1.;
+}
+</script>
+
+<script type="x-shader/fragment" id="torusSurface">
+VAL3 surface(VAL2 s)
+{
+    return VAL3(mul(c(1) + 0.5 * d_cos(s[1]), d_cos(s[0])),
+                mul(c(1) + 0.5 * d_cos(s[1]), d_sin(s[0])),
+                0.5 * d_sin(s[1]));
+}
+
+bool inRange(vec2 ts)
+{
+    return 0. <= ts.x && ts.x < TAU && 0. <= ts.y && ts.y < TAU;
+    // return true;
+}
+</script>
+
+<script type="x-shader/fragment" id="torus2Surface">
+VAL3 surface(VAL2 s)
+{
+    float t = 0.6 * time;
+    
+    VAL r0 = c(1. - 0.3*sin(t));
+    float r1 = 0.5 + 0.25*cos(t);
+    
+    return VAL3(mul(r0 + r1 * d_cos(s[1]), d_cos(s[0])),
+                mul(r0 + r1 * d_cos(s[1]), d_sin(s[0])),
+                0.5 * d_sin(s[1]));
+}
+
+bool inRange(vec2 ts)
+{
+    // return 0. <= ts.x && ts.x < TAU && 0. <= ts.y && ts.y < TAU;
+    return true;
+}
+</script>
+<script type="x-shader/fragment" id="torusknotSurface">
+VAL3 surface(VAL2 s)
+{
+    VAL r0 = c(1.);
+    float r1 = 0.5;
+    
+    float p = 1.;
+    float q = 1.;
+    
+    switch((int(time) / 4) % 3)
+    {
+        case 0:
+            p = 3.;
+            q = 5.;
+            break;
+        case 1:
+            p = 9.;
+            q = 7.;
+            break;
+        case 2:
+            p = 2.;
+            q = 3.;
+            break;
+    }
+    
+    // s[0] += 0.1 * c(time);
+    
+    VAL t = 0.4 * c(time);
+    
+    VAL R = r0 + r1 * d_cos(q * s[0] + t);
+    VAL2 pv = VAL2(d_cos(p * s[0]),
+                    d_sin(p * s[0]));
+                    
+    VAL2 R_pv = mul(R, pv);
+    
+    VAL3 curv = VAL3(R_pv[0], R_pv[1],
+                        r1 * d_sin(q * s[0] + t));
+                        
+    VAL R_der = -r1 * q * d_sin(q * s[0] + t);
+    VAL2 pv_der = VAL2(-p * d_sin(p * s[0]),
+                        p * d_cos(p * s[0]));
+                        
+    VAL2 pv_der_R = mul(pv_der, R);
+    
+    VAL2 R_pv_der = mul(R_der, pv) + pv_der_R;
+    
+    VAL3 curv_der = VAL3(R_pv_der[0], R_pv_der[1],
+                    r1 * q * d_cos(q * s[0] + t));
+    
+    curv_der = div(curv_der, d_sqrt(d_lenSq(curv_der)));
+    
+    
+    VAL3 torus_der = VAL3(pv_der_R[0], pv_der_R[0], c(0.));
+    // torus_der = div(torus_der, d_sqrt(d_lenSq(torus_der)));
+    
+    VAL3 right = d_cross(torus_der, curv_der);
+    right = div(right, d_sqrt(d_lenSq(right)));
+    
+    VAL3 up = d_cross(right, curv_der);
+    // up = div(up, d_sqrt(d_lenSq(up)));
+    
+    return curv + 0.1 * (mul(d_cos(s[1]), right) + mul(d_sin(s[1]), up));
+}
+
+bool inRange(vec2 ts)
+{
+    // return 0. <= ts.x && ts.x < TAU && 0. <= ts.y && ts.y < TAU;
+    return true;
+}
+</script>
+<script type="x-shader/fragment" id="BreatherSurface">
+
+#define DISABLE_STOCHASTIC
+
+VAL d_cosh(VAL a) { return VAL(cosh(a.x), a.yz * sinh(a.x)); }
+VAL d_sinh(VAL a) { return VAL(sinh(a.x), a.yz * cosh(a.x)); }
+
+float a() { return 0.3*cos(0.1*time) + 0.5; }
+
+VAL3 surface(VAL2 s)
+{
+    float aa = a();
+    
+    float wsqr = 1. - sq(aa);
+    float w = sqrt(wsqr);
+    
+    VAL v = s[0];
+    VAL u = s[1];
+    
+    VAL denom = aa * (d_sq(w * d_cosh(aa * u)) + d_sq(aa * d_sin(w * v)));
+    
+    return VAL3(-u, c(0), c(0)) + 
+        div(VAL3(
+        2. * wsqr * mul(d_cosh(aa * u), d_sinh(aa * u)),
+        2. * w * mul(d_cosh(aa * u), -(w * mul(d_cos(v), d_cos(w * v))) - mul(d_sin(v), d_sin(w * v))),
+        2. * w * mul(d_cosh(aa * u), -(w * mul(d_sin(v), d_cos(w * v))) + mul(d_cos(v), d_sin(w * v)))), denom);
+}
+
+bool inRange(vec2 ts)
+{
+    float aa = a();
+    
+    float wsqr = 1. - sq(aa);
+    float w = sqrt(wsqr);
+    
+    float range = TAU * exp(1. / aa);
+    
+    return 0. <= ts.x && ts.x < range && -14. <= ts.y && ts.y < 14.;
+    // return true;
+}    
+    
+    
+</script>
+
+
+        <script>
+            function setCode(code)
+            {
+                editor.setValue(code);
+                setParametricEquation(code);
+            }
+
+            loadShaders.then(() => {
+                const surfaceToLoad = "BreatherSurface";  // "boySurface"
+                setCode(document.getElementById(surfaceToLoad).innerHTML);
+            });
+
+            document.getElementById("plotButton").addEventListener("click", function(e)
+            {
+                setCode(editor.getValue());
+            });
+        </script>
+
+
     </body>
 </html>
 

@@ -98,7 +98,7 @@ void handleNeighbour(ivec2 otherCoord, vec2 fcoord, bool onBlue, inout bool[2] l
             // bool zeroDet = false;
             for(int i = 0; i < (otherYellowBlue == 1 ? 5 : 2) && maxVal(abs(fcoord - surfProj)) > 0.5; i++) 
             {
-                sj = transpose(surfaceAutoDiff(mat3x2(ts, 1, 0, 0, 1)));
+                sj = transpose(surface(VAL2(VAL(ts.x, 1, 0), VAL(ts.y, 0, 1))));
 
                 surf = sj[0];
                 surfProj = proj(surf);
@@ -115,7 +115,7 @@ void handleNeighbour(ivec2 otherCoord, vec2 fcoord, bool onBlue, inout bool[2] l
 
             if(any(isnan(ts)) || !inRange(ts)) continue;
 
-            surf = surface(ts);
+            surf = transpose(surface(VAL2(VAL(ts.x, 0, 0), VAL(ts.y, 0, 0))))[0];
             surfProj = proj(surf);
 
 
@@ -123,14 +123,14 @@ void handleNeighbour(ivec2 otherCoord, vec2 fcoord, bool onBlue, inout bool[2] l
 
             if(newSettled)
             {
-                float realForwardDir = dot(axes[2], surf);
+                float forwardDir = dot(axes[2], surf);
 
                 // Update the blue value only if(onBlue).
                 for(int yellowBlue = 0; yellowBlue < 2 && (onBlue || yellowBlue < 1); yellowBlue++)
                 {
-                    float forwardDir = realForwardDir * (yellowBlue == 0 ? 1. : -1.);
-
-                    if(!lastSettled[yellowBlue] || forwardDir < minForward[yellowBlue])
+                    //                             if yellow: forwardDir < minForward[yellowBlue] == true
+                    //                             if blue:   forwardDir < minForward[yellowBlue] == false
+                    if(!lastSettled[yellowBlue] || (yellowBlue == 0) == (forwardDir < minForward[yellowBlue]))
                     {
                         if(yellowBlue == 0) fragColor.xy = ts;
                         else fragColor.zw = ts;
@@ -156,10 +156,10 @@ void main( void )
     {
         const vec2 initTS = vec2(0.5, 0.5);
 
-        if(sqi(coord - ivec2(proj(surface(initTS)))) < 4)
+        // if(sqi(coord - ivec2(proj(transpose(surface(VAL2(VAL(initTS.x, 0, 0), VAL(initTS.y, 0, 0))))[0]))) < sqi(4))
             fragColor = vec4(initTS, none, none);
-        else
-            fragColor = vec4(none);
+        // else
+            // fragColor = vec4(none);
 
         return;
     }
@@ -187,19 +187,23 @@ void main( void )
         int jf = jumpFunc(n);
 
         // if(false && jf == 1)
-        // {
-        //     for(int i = 1; i < 8; i += 2 /* variable (1, 2) */)
-        //     {
-        //         ivec2 otherCoord = coord + jf * relSquare(i);
+        // if(onBlue)
+        // if(true)
+        #ifdef DISABLE_STOCHASTIC
+        {
+            for(int i = 1; i < 8; i += 2 /* variable (1, 2) */)
+            {
+                ivec2 otherCoord = coord + jf * relSquare(i);
 
 
-        //         if(any(lessThan(otherCoord, ivec2(0))) || any(greaterThanEqual(otherCoord, resolution))) continue;
+                if(any(lessThan(otherCoord, ivec2(0))) || any(greaterThanEqual(otherCoord, resolution))) continue;
 
 
-        //         handleNeighbour(otherCoord, fcoord, onBlue, lastSettled, minForward);
-        //     }
-        // }
+                handleNeighbour(otherCoord, fcoord, onBlue, lastSettled, minForward);
+            }
+        }
         // else
+        #else
         {
             int i = 1 + 2 * (int(100. * hash12(vec2(2 * frame + START_N, coord.x + resolution.x * coord.y) / 100.)) % 4);
             // int i = 1 + 2 * (((3 * frame + START_N) + coord.x + resolution.x * coord.y) % 4);
@@ -213,6 +217,7 @@ void main( void )
                 handleNeighbour(otherCoord, fcoord, onBlue, lastSettled, minForward);
             }
         }
+        #endif
     }
 }
 

@@ -37,6 +37,9 @@ var editor = ace.edit("editor", { mode: 'ace/mode/glsl' });
 
 editor.setTheme("ace/theme/monokai");
 
+editor.resize();
+
+
 function updateKeywords(list) {
     var keywords = editor.session.$mode.$highlightRules.$keywords;
     list.forEach(function(x) 
@@ -46,9 +49,42 @@ function updateKeywords(list) {
     editor.session.bgTokenizer.start(0);
 }
 
-setTimeout(function() { updateKeywords([["foo", "keyword"], ["barb", "keyword"]]); }, 1000); // TODO
-// "variable.language"
-// "keyword"
-// "constant.language"
+setTimeout(function() { 
+    updateKeywords([["VAL", "support.type"], 
+                    ["VAL2", "support.type"],
+                    ["VAL3", "support.type"],
+                    ["add", "support.function"],
+                    ["sub", "support.function"],
+                    ["mul", "support.function"],
+                    ["recip", "support.function"],
+                    ["div", "support.function"],
+                    ["d_sq", "support.function"],
+                    ["d_sin", "support.function"],
+                    ["d_cos", "support.function"],
+                    ["d_exp", "support.function"],
+                    ["d_log", "support.function"],
+                    ["dc_mul", "support.function"],
+                    ["dc_sq", "support.function"],
+                    ["dc_conj", "support.function"],
+                    ["dc_absSq", "support.function"],
+                    ["dcr_div", "support.function"],
+                    ["dc_recip", "support.function"]
+                ]); 
+
+    // https://github.com/ajaxorg/ace/wiki/Creating-or-Extending-an-Edit-Mode
+    //
+    // "variable.language" : this
+    // "keyword" : types and keyword
+    // "constant.language" : max mix clamp dot step
+    // "keyword.operator"
+    // "support.type"
+    //
+    /*
+    "keyword.control" : keywordControls,
+    "storage.type" : storageType,
+    "storage.modifier" : storageModifiers,
+    */
+
+}, 1000); // TODO
 
 

@@ -21,7 +21,7 @@ void main( void )
         return;
     }
 
-    mat3x3 surfJacob = transpose(surfaceAutoDiff(mat3x2(val.xy, 1, 0, 0, 1)));
+    mat3x3 surfJacob = transpose(surface(VAL2(VAL(val.x, 1, 0), VAL(val.y, 0, 1))));
 
     vec3 surfVal = surfJacob[0];  // surface(val.xy);
 
