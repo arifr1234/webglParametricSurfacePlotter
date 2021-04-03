@@ -125,9 +125,18 @@ VAL2 dc_recip(VAL2 z) { return dcr_div(dc_conj(z), dc_absSq(z)); }
 ///   the Parametric Equation   ///
 ///////////////////////////////////
 
+// USER CODE START
+
 {{parametricEquation}}
 
+// USER CODE END
 
+#ifdef DEFAULT_SHADING
+vec3 shading(vec3 normal, vec2 ts, vec3 pos)
+{ 
+    return vec3(dot(normal, vec3(1, 0, 0)) / 2. + 0.5);
+}
+#endif
 
 
 

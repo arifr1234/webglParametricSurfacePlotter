@@ -44,6 +44,8 @@ const loadShaders = Promise.all([getShader("common.fs"), getShader("image.fs"), 
     [commonFs, imageFs, bufferAFs] = values;
 });
 
+const GlslErrors = document.getElementById("GlslErrors");
+
 class ParametricSurface
 {
     deleteObj()
@@ -76,10 +78,32 @@ class ParametricSurface
 
     constructor(code)
     {
+        
+
         const currentCommon = commonFs.replace(`{{parametricEquation}}`, code);
 
+        GlslErrors.innerText = "";
+        GlslErrors.style.visibility = "hidden";
+
+        this.bufferAProgramInfo = twgl.createProgramInfo(gl, ["vs", concat(currentCommon, bufferAFs)], err => 
+        { 
+            const startSring = "// USER CODE START";
+            const endString = "// USER CODE END";
+            
+            const startI = err.indexOf(startSring) + startSring.length;
+            const endI = err.indexOf(endString);
+
+            err = err.slice(startI, endI);
+
+            // console.log(err);
+            GlslErrors.innerText = err;
+            GlslErrors.style.visibility = "visible";
+        });
+        if(this.bufferAProgramInfo == null) return;
+
         this.imageProgramInfo = twgl.createProgramInfo(gl, ["vs", concat(currentCommon, imageFs)]);
-        this.bufferAProgramInfo = twgl.createProgramInfo(gl, ["vs", concat(currentCommon, bufferAFs)]);
+
+
 
         this.bufferAInFbi = twgl.createFramebufferInfo(gl, attachments);
         this.bufferAOutFbi = twgl.createFramebufferInfo(gl, attachments);
@@ -164,8 +188,8 @@ class ParametricSurface
             
             if(!this.halt)
                 requestAnimationFrame(render);
-            else 
-                console.log("halted");
+            // else 
+            //     console.log("halted");
             
         }.bind(this);
         requestAnimationFrame(render);
@@ -185,7 +209,10 @@ function setParametricEquation(code)
 
 // Rotation 
 
-let rotation = [0, 0];
+let rotation = [
+    -0.7854428581286133,
+    0.36959913571644576
+];//[0, 0];
 function getRotation(p)
 {
     return [p[0] / gl.canvas.width, p[1] / gl.canvas.height].map(d => d*2*Math.PI);
@@ -212,7 +239,7 @@ gl.canvas.addEventListener('dblclick', e =>
 
 // zoom
 
-let radius = 1.75;  // 2;
+let radius = 5.15;  // 2;
 
 gl.canvas.addEventListener("wheel", e => 
 {

@@ -17,7 +17,7 @@ void main( void )
 
     if(ISNONE(val.x))//(MODE(val) == NONE)
     {
-        fragColor = vec4(1, 0, 1, 1);
+        fragColor = vec4(0.);//vec4(1, 0, 1, 1);
         return;
     }
 
@@ -34,9 +34,7 @@ void main( void )
 
     vec3 normal = normalize(cross(surfJacob[1], surfJacob[2]));
 
-    float light = dot(normal, vec3(1, 0, 0)) / 2. + 0.5;
-
-    fragColor = vec4(vec3(light), 1);
+    fragColor = vec4(shading(normal, val.xy, surfVal), 1);
 
 
 }

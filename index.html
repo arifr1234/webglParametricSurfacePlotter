@@ -6,14 +6,21 @@
                 margin: 0;
             }
 
+            #rightBar
+            {
+                position: relative;
+
+                height: 100vh;
+
+                overflow: auto;
+            }
+
             #canvasContainer
             {
                 display: flex;
                 align-items: center;
 
-                height: 100vh;
-
-                overflow: auto;
+                height: 100%;
             }
 
             canvas {
@@ -27,8 +34,18 @@
             }
 
             #editor { 
-                width: 100%;
                 height: 80vh;
+            }
+
+            #controls
+            {
+                padding: 5px;
+
+                display: flex;
+            }
+            #controls > *
+            {
+                margin: 5px;
             }
         
         </style>
@@ -36,9 +53,9 @@
     </head>
     <body>
         <div style="width: 100vw; height: 100vh; overflow: hidden;">
-            <div id="leftBar" style="background-color: black; width: 400px; height: 100vh; float: left; display: flex;">
+            <div id="leftBar" style="width: 400px; height: 100vh; float: left; display: flex;">
                 
-                <div style="width: 100%; height: 100vh;">
+                <div style="height: 100vh; flex-grow: 1; width: 0px;">
                     <div id="editor">
                         vec2 func(int a, foo b)
                         {
@@ -46,21 +63,111 @@
                         }
                     </div>
 
-                    <div>
+                    <div id="controls" style="overflow-x: auto;">
                         <button id="plotButton" style="width: 50px; height: 50px;">Plot!</button>
+                        <select id="exampleSelect">
+                            <option value="">Examples</option>
+                        </select>
+                        <div>
+                            <span style="float: left;">background color: </span>
+                            <input type="color" value="#FFFFFF" id="backgroundColorInput">
+                        </div>
+                        <button id="helpButton">Help</button>
+                        <a href="https://github.com/arifr1234/webglParametricSurfacePlotter" target="_blank">GitHub</a>
                     </div>
                 </div>
                 
                 <a id="dragBar" style="cursor:col-resize; width: 5px; height: 100vh; background-color: gray; display: block;"></a>
             </div>
             
-            <div id="canvasContainer">
-                <canvas id="c"></canvas>
+            <div id="rightBar">
+                <div id="canvasContainer">
+                    <canvas id="c"></canvas>
+                </div>
+                <pre id="GlslErrors" style="position: absolute; top: 0px; left: 0px; margin: 10px; padding: 3px; background-color: white; color: red; border-style: solid; visibility: hidden;"></pre>
+                <div id="help" style="position: absolute; top: 0px; left: 0px; margin: 10px; padding: 3px; border-style: solid; background-color: white; display: none;">
+                    <h1>Help</h1>
+                    <li>Language: GLSL 3.00</li>
+                    <h2>Simple operations</h2>
+                    <ul>
+                        <!-- ace_support ace_type -->
+                        <li><code>c(a)</code> : constant (for instance: <code>c(1.5)</code>, <code>c(time)</code>)</li>
+                        <li><code>a + b</code> : addition</li>
+                        <li><code>a - b</code> : subtraction</li>
+                        <li><code>mul(a, b)</code> : multiplication (element wise)</li>
+                        <li><code>div(a, b)</code> : division (element wise)</li>
+                        <li><code>recip(b)</code> : reciprocal (1/b)</li>
+                    </ul>
+                    <h2>Other functions</h2>
+                    <ul>
+                        <li><code>d_sq(a)</code> : squared (a*a)</li>
+                        <li><code>d_sqrt(a)</code> : square root</li>
+                        <li><code>d_sin(a)</code></li>
+                        <li><code>d_cos(a)</code></li>
+                        <li><code>d_exp(a)</code></li>
+                        <li><code>d_log(a)</code></li>
+                    </ul>
+                    <h2>Complex functions</h2>
+                    <ul>
+                        <li><code>dc_mul(a, b)</code></li>
+                        <li><code>dc_sq(z)</code></li>
+                        <li><code>dc_conj(z)</code> : conjugate</li>
+                        <li><code>dc_absSq(z)</code> : Re(z)^2 + Im(z)^2</li>
+                        <li><code>dc_recip(z)</code> : 1/z</li>
+                    </ul>
+                    <h2>Vector functions</h2>
+                    <ul>
+                        <li><code>d_lenSq(v)</code> : x^2 + y*2 + z^2</li>
+                        <li><code>d_cross(a, b)</code> : cross product</li>
+                    </ul>
+                    <h2>Types and variables</h2>
+                    <ul>
+                        <li><code>VAL</code> : number (replaces float)</li>
+                        <li><code>VAL2</code> : 2 dimensional vector (replaces vec2)</li>
+                        <li><code>VAL3</code> : 3 dimensional vector (replaces vec3)</li>
+                    </ul>
+                    <h2>Main function</h2>
+                    <ul>
+                        <li><code>VAL3 surface(VAL2 ts)</code> - the parametric function</li>
+                        <li><code>bool inRange(vec2 ts)</code> - return true if inside the parameter domain</li>
+                        <li><code>vec3 shading(vec3 normal, vec2 ts, vec3 pos)</code></li>
+                    </ul>
+                    <h2>Flags and globals</h2>
+                    <ul>
+                        <li><code>time</code> : time in seconds</li>
+                        <li><code>#define DEFAULT_SHADING</code> - the shading function will be <pre>vec3 shading(vec3 normal, vec2 ts, vec3 pos)
+{ 
+    return vec3(dot(normal, vec3(1, 0, 0)) / 2. + 0.5);
+}</pre></li>
+                        <li><code>#define DISABLE_STOCHASTIC</code> : runs slower but more accurately</li>
+                    </ul>
+                    <p><b>NOTE: don't add <code>float</code>s with <code>VAL</code>s.</b></p>
+                    <p>You can however multiply <code>float</code>s with <code>VAL</code>s (or with <code>VAL2</code> or <code>VAL3</code>)</p>
+                    <h2>Advanced use/Under The Hood</h2>
+                    <p>The <code>VAL</code> type and the custom functions are used in order to calculate the surface function derivatives (Jacobian) efficiently and accurately, using AutoDiff.</p>
+                    <p>AutoDiff requires every variable to contain the value and the derivatives, and each operation/function to calculate both the value and the derivatives based on the previous ones.</p>
+                    <p>Therefore <code>VAL</code> is a glsl <code>vec3</code> under the hood, where the x component is the value, the y component is the derivative in terms of the first parameter (parameter to the <code>surface</code> function), and z component is the derivative in terms of the second parameter.</p>
+                    <p><code>VAL2</code> and <code>VAL3</code> are <code>mat2x3</code> and <code>mat3x3</code> respectively.</p>
+                    <h2>Custom function definition example</h2>
+                    <pre>VAL d_cosh(VAL a) { return VAL(cosh(a.x), a.yz * sinh(a.x)); }
+VAL d_sinh(VAL a) { return VAL(sinh(a.x), a.yz * cosh(a.x)); }
+                    </pre>
+                </div>
+                <script>
+                    const helpButton = document.getElementById("helpButton");
+                    const help = document.getElementById("help");
+
+                    let visibility = false;
+                    helpButton.addEventListener("click", (e) => {
+                        help.style.display = visibility ? "none" : "block";
+                        visibility = !visibility;
+                    });
+                </script>
             </div>
 
             <script>
-                var left = document.getElementById('leftBar');
-                var bar = document.getElementById('dragBar');
+                const left = document.getElementById('leftBar');
+                const bar = document.getElementById('dragBar');
         
                 //script assuming leftBar doesn't have padding.
                 
@@ -77,6 +184,13 @@
         
                 document.addEventListener('mouseup', () => {
                     document.removeEventListener('mousemove', dragB);
+                });
+
+
+                const canvasContainer = document.getElementById("canvasContainer");
+
+                document.getElementById("backgroundColorInput").addEventListener("change", e => {
+                    canvasContainer.style.backgroundColor = e.target.value;
                 });
             </script>
         
@@ -98,9 +212,10 @@
  
 			}
 		</script>
+
         <script src="graphics.js"></script>
 
-<script type="x-shader/fragment" id="boySurface">
+<script type="x-shader/fragment" id="boySurface" data-name="Boy's surface">
 VAL3 surface(VAL2 s)
 {
     const float sqrt5 = sqrt(5.);
@@ -129,9 +244,10 @@ bool inRange(vec2 ts)
 {
     return sq(ts.x) + sq(ts.y) <= 1.;
 }
-</script>
 
-<script type="x-shader/fragment" id="torusSurface">
+#define DEFAULT_SHADING
+</script>
+<script type="x-shader/fragment" id="torusSurface" data-name="Torus">
 VAL3 surface(VAL2 s)
 {
     return VAL3(mul(c(1) + 0.5 * d_cos(s[1]), d_cos(s[0])),
@@ -141,12 +257,14 @@ VAL3 surface(VAL2 s)
 
 bool inRange(vec2 ts)
 {
-    return 0. <= ts.x && ts.x < TAU && 0. <= ts.y && ts.y < TAU;
-    // return true;
+    // return 0. <= ts.x && ts.x < TAU && 0. <= ts.y && ts.y < TAU;
+    return true;
 }
+
+#define DEFAULT_SHADING
 </script>
 
-<script type="x-shader/fragment" id="torus2Surface">
+<script type="x-shader/fragment" id="torus2Surface" data-name="Dancing torus">
 VAL3 surface(VAL2 s)
 {
     float t = 0.6 * time;
@@ -164,8 +282,10 @@ bool inRange(vec2 ts)
     // return 0. <= ts.x && ts.x < TAU && 0. <= ts.y && ts.y < TAU;
     return true;
 }
+
+#define DEFAULT_SHADING
 </script>
-<script type="x-shader/fragment" id="torusknotSurface">
+<script type="x-shader/fragment" id="torusknotSurface" data-name="Torus knot">
 VAL3 surface(VAL2 s)
 {
     VAL r0 = c(1.);
@@ -192,7 +312,7 @@ VAL3 surface(VAL2 s)
     
     // s[0] += 0.1 * c(time);
     
-    VAL t = 0.4 * c(time);
+    VAL t = 0.2 * c(time);
     
     VAL R = r0 + r1 * d_cos(q * s[0] + t);
     VAL2 pv = VAL2(d_cos(p * s[0]),
@@ -234,19 +354,30 @@ bool inRange(vec2 ts)
     // return 0. <= ts.x && ts.x < TAU && 0. <= ts.y && ts.y < TAU;
     return true;
 }
-</script>
-<script type="x-shader/fragment" id="BreatherSurface">
 
+
+vec3 hsv2rgb(vec3 c)
+{
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+vec3 shading(vec3 normal, vec2 ts, vec3 pos)
+{
+    float light = 0.5 * dot(normal, vec3(1, 0, 0)) + 0.5;
+    return light * hsv2rgb(vec3(fract(5. * ts.x / TAU - 0.2 * time), 1, 1));
+}
+</script>
+<script type="x-shader/fragment" id="BreatherSurface" data-name="Breather surface">
 #define DISABLE_STOCHASTIC
 
 VAL d_cosh(VAL a) { return VAL(cosh(a.x), a.yz * sinh(a.x)); }
 VAL d_sinh(VAL a) { return VAL(sinh(a.x), a.yz * cosh(a.x)); }
 
-float a() { return 0.3*cos(0.1*time) + 0.5; }
-
 VAL3 surface(VAL2 s)
 {
-    float aa = a();
+    float aa = (mod(floor(time / 5.), 3.) + 2.) / 5.;
     
     float wsqr = 1. - sq(aa);
     float w = sqrt(wsqr);
@@ -265,18 +396,10 @@ VAL3 surface(VAL2 s)
 
 bool inRange(vec2 ts)
 {
-    float aa = a();
-    
-    float wsqr = 1. - sq(aa);
-    float w = sqrt(wsqr);
-    
-    float range = TAU * exp(1. / aa);
-    
-    return 0. <= ts.x && ts.x < range && -14. <= ts.y && ts.y < 14.;
-    // return true;
-}    
-    
-    
+    return 0. <= ts.x && ts.x < 150. && -14. <= ts.y && ts.y < 14.;
+}
+
+#define DEFAULT_SHADING
 </script>
 
 
@@ -295,6 +418,23 @@ bool inRange(vec2 ts)
             document.getElementById("plotButton").addEventListener("click", function(e)
             {
                 setCode(editor.getValue());
+            });
+
+
+            exampleSelect = document.getElementById("exampleSelect");
+
+            document.querySelectorAll("script[data-name]").forEach(e => {
+                let op = document.createElement("option");
+                op.value = e.id;
+                op.innerHTML = e.dataset.name;
+                exampleSelect.appendChild(op);
+            });
+
+            exampleSelect.addEventListener("change", e =>
+            {
+                setCode(document.getElementById(e.target.value).innerHTML);
+
+                e.target.value = "";
             });
         </script>
 
