@@ -1,0 +1,33 @@
+
+VAL3 surface(VAL2 s)
+{
+    const float sqrt5 = sqrt(5.);
+    
+    VAL2 s2 = dc_sq(s);
+    VAL2 s3 = dc_mul(s2, s);
+    VAL2 s4 = dc_sq(s2);
+    VAL2 s6 = dc_sq(s3);
+    
+    const VAL2 one = VAL2(c(1), c(0));
+    
+    VAL2 denominator = dc_recip(s6 + sqrt5*s3 - one);
+    
+    VAL3 g = VAL3(
+        -1.5 * dc_mul(dc_mul(s, one - s4), denominator)[1],
+        -1.5 * dc_mul(dc_mul(s, one + s4), denominator)[0],
+        dc_mul(one + s6, denominator)[1] - c(0.5)
+    );
+
+    VAL normalFactor = recip(d_sq(g[0]) + d_sq(g[1]) + d_sq(g[2]));
+
+    return VAL3(mul(g[0], normalFactor), mul(g[1], normalFactor), mul(g[2], normalFactor) + c(0.75));
+}
+
+bool inRange(vec2 ts)
+{
+    float norm = sqrt(sq(ts.x) + sq(ts.y));
+    float scope = (0.8 * sin(time) + 1.) / 2.;
+    return scope - 0.1 <= norm && norm <= scope + 0.1;
+}
+
+#define DEFAULT_SHADING
